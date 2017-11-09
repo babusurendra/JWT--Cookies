@@ -1,7 +1,15 @@
 var app = require('express')();
+var express = require('express');
 var jwt = require('jsonwebtoken');
-var cookieParser = require('cookie-parser')
-app.use(cookieParser())
+var cookieParser = require('cookie-parser');
+var session = require('express-session');
+app.use(cookieParser());
+//app.use(express.cookieParser('S3CRE7'));
+app.use(session({
+    key: 'app.sess',
+    secret: 'SEKR37'
+  }));
+
 // app.use(function(req,res){
 //     console.log("this is middleware");
 // })
@@ -17,8 +25,12 @@ app.get('/login',function(req,res){
     var token = jwt.sign(user, 'secret');
    // app.use(session({ secret: 'keyboard cat', cookie: { maxAge: 60000 }}))
      res.cookie('auth',token);
+     req.session.token =token;
+     
+    // req.session['primary skill'] = 'Dancing';
      res.json({Token:token});
-})
+});
+
 // app.use(session({
 //     name: 'server-session-cookie-id',
 //     secret: 'my express secret',
@@ -29,10 +41,12 @@ app.get('/login',function(req,res){
 
 app.use(function(req,res,next){
     // res.redirect('/');
-    var token = req.cookies.auth;
-    console.log("token in cookie"+ token);
-    console.log(req.cookies);
+    //var token = req.cookies.auth;
+   // console.log("token stored in session is "+ req.session.token);
+    //console.log("token in cookie"+ token);
+  //  console.log(req.cookies);
       // decode token
+      let token = req.session.token;
       if (token) {
     
         jwt.verify(token, 'secret', function(err, token_data) {
@@ -51,14 +65,17 @@ app.use(function(req,res,next){
       //res.redirect('/login');
 });
 app.use(function(req,res,next){
-    token = req.cookies.auth;
-    console.log("token after deleting"+ token);
+    //token = req.cookies.auth;
+    //console.log("token after deleting"+ token);
     next();
 })
 app.get('/protected',function(req,res){
     res.send("we are in protected");
 })
-
+app.get('/logout',function(req,res){
+    delete req.session.token;
+    res.send("Your session deleted");
+});
 // $window.sessionStorage.accessToken = response.body.access_token;
 // app.use(function(req, res, next) {
 //     var session_id = req.header("x-session-token");
